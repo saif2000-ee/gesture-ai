@@ -1,119 +1,42 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+<meta charset="UTF-8">
 <title>Gesture AI</title>
-
-<style>
-
-body{
-text-align:center;
-font-family:Arial;
-}
-
-video{
-border:3px solid black;
-}
-
-#letter{
-font-size:40px;
-margin-top:10px;
-}
-
-#word{
-font-size:50px;
-color:green;
-margin-top:20px;
-}
-
-button{
-font-size:20px;
-padding:10px 20px;
-margin-top:20px;
-}
-
-</style>
-
 </head>
-
 <body>
-
-<h2>Arabic Sign Language</h2>
-
-<video id="video" width="400" autoplay></video>
-<canvas id="canvas" style="display:none"></canvas>
-
-<h1 id="letter">...</h1>
-
-<h2>Word:</h2>
-<h1 id="word"></h1>
-
-<button onclick="clearWord()">Clear</button>
+<h2>Gesture AI Fingerspelling</h2>
+<video id="video" width="320" height="240" autoplay></video>
+<p>Detected Letter: <span id="letter">-</span></p>
 
 <script>
+const video = document.getElementById('video');
+const letterEl = document.getElementById('letter');
 
-const video = document.getElementById("video")
+// تشغيل الكاميرا
+navigator.mediaDevices.getUserMedia({ video: true })
+.then(stream => video.srcObject = stream)
+.catch(err => console.error(err));
 
-navigator.mediaDevices.getUserMedia({video:true})
-.then(stream=>{
-video.srcObject=stream
-})
+// إرسال frames كل 500ms
+setInterval(() => {
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const img_data = canvas.toDataURL('image/jpeg');
 
-let currentLetter=""
-let word=""
-
-setInterval(()=>{
-predict()
-},800)
-
-
-function predict(){
-
-const canvas=document.getElementById("canvas")
-const ctx=canvas.getContext("2d")
-
-canvas.width=video.videoWidth
-canvas.height=video.videoHeight
-
-ctx.drawImage(video,0,0)
-
-let image=canvas.toDataURL("image/jpeg")
-
-fetch("/predict",{
-method:"POST",
-headers:{
-"Content-Type":"application/json"
-},
-body:JSON.stringify({image:image})
-})
-.then(res=>res.json())
-.then(data=>{
-
-let letter=data.prediction
-
-document.getElementById("letter").innerText=letter
-
-// منع التكرار
-if(letter!=currentLetter && letter!="?"){
-
-word += letter
-
-document.getElementById("word").innerText=word
-
-currentLetter=letter
-}
-
-})
-
-}
-
-function clearWord(){
-
-word=""
-document.getElementById("word").innerText=""
-
-}
-
+    fetch('/predict', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: img_data })
+    })
+    .then(res => res.json())
+    .then(data => {
+        letterEl.textContent = data.letter;
+    });
+}, 500);
 </script>
-
 </body>
 </html>
