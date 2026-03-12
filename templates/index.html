@@ -3,40 +3,47 @@
 <head>
 <meta charset="UTF-8">
 <title>Gesture AI</title>
+<style>
+    body { text-align: center; font-family: Arial; background: #f0f0f0; }
+    video { border: 2px solid #4CAF50; }
+    #letter { font-size: 48px; margin-top: 20px; }
+</style>
 </head>
 <body>
-<h2>Gesture AI Fingerspelling</h2>
-<video id="video" width="320" height="240" autoplay></video>
-<p>Detected Letter: <span id="letter">-</span></p>
+<h1>Gesture AI</h1>
+<video id="video" width="160" height="120" autoplay></video>
+<div id="letter"></div>
 
 <script>
 const video = document.getElementById('video');
-const letterEl = document.getElementById('letter');
+const letterDiv = document.getElementById('letter');
 
-// تشغيل الكاميرا
+// الوصول للكاميرا
 navigator.mediaDevices.getUserMedia({ video: true })
-.then(stream => video.srcObject = stream)
-.catch(err => console.error(err));
+.then(stream => { video.srcObject = stream; });
 
-// إرسال frames كل 500ms
-setInterval(() => {
+function captureFrame() {
     const canvas = document.createElement('canvas');
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
     const ctx = canvas.getContext('2d');
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    const img_data = canvas.toDataURL('image/jpeg');
+    return canvas.toDataURL('image/jpeg');
+}
 
-    fetch('/predict', {
+async function predict() {
+    const img = captureFrame();
+    const response = await fetch('/predict', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image: img_data })
-    })
-    .then(res => res.json())
-    .then(data => {
-        letterEl.textContent = data.letter;
+        body: JSON.stringify({ image: img })
     });
-}, 500);
+    const data = await response.json();
+    letterDiv.textContent = data.letter;
+}
+
+// كل 500ms نرسل صورة للسيرفر
+setInterval(predict, 500);
 </script>
 </body>
 </html>
