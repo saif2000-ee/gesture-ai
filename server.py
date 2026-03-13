@@ -14,7 +14,11 @@ model = model_dict['model']
 max_length = model_dict.get('max_length', 42)
 
 mp_hands = mp.solutions.hands
-hands = mp_hands.Hands(static_image_mode=True, max_num_hands=2)
+hands = mp_hands.Hands(
+    static_image_mode=False,
+    max_num_hands=2,
+    min_detection_confidence=0.5
+)
 
 labels_dict = {
     0:'ع',1:'ال',2:'ا',3:'ب',4:'ض',5:'د',6:'ف',7:'غ',8:'ح',9:'ه',
