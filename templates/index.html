@@ -1,49 +1,76 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar">
 <head>
-<meta charset="UTF-8">
-<title>Gesture AI</title>
-<style>
-    body { text-align: center; font-family: Arial; background: #f0f0f0; }
-    video { border: 2px solid #4CAF50; }
-    #letter { font-size: 48px; margin-top: 20px; }
-</style>
+    <meta charset="UTF-8">
+    <title>Gesture Recognition</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f0f0f0;
+        }
+        video, canvas {
+            border: 2px solid green;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        #prediction {
+            font-size: 2em;
+            margin-top: 20px;
+            color: #007700;
+        }
+        button {
+            margin-top: 15px;
+            padding: 10px 20px;
+            font-size: 1em;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
 </head>
 <body>
-<h1>Gesture AI</h1>
-<video id="video" width="160" height="120" autoplay></video>
-<div id="letter"></div>
+    <h1>التعرف على الحروف بالإشارات</h1>
+    <video id="video" width="320" height="240" autoplay></video>
+    <canvas id="canvas" width="320" height="240" style="display:none;"></canvas>
+    <div id="prediction">–</div>
+    <button id="snapBtn">التقاط صورة</button>
 
-<script>
-const video = document.getElementById('video');
-const letterDiv = document.getElementById('letter');
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const snapBtn = document.getElementById('snapBtn');
+        const predictionDiv = document.getElementById('prediction');
 
-// الوصول للكاميرا
-navigator.mediaDevices.getUserMedia({ video: true })
-.then(stream => { video.srcObject = stream; });
+        // تشغيل الكاميرا
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => {
+                video.srcObject = stream;
+            })
+            .catch(err => {
+                alert('لم يتمكن المتصفح من الوصول إلى الكاميرا: ' + err);
+            });
 
-function captureFrame() {
-    const canvas = document.createElement('canvas');
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    return canvas.toDataURL('image/jpeg');
-}
+        snapBtn.addEventListener('click', () => {
+            // نسخ إطار الفيديو إلى الكانفاس
+            const context = canvas.getContext('2d');
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const dataURL = canvas.toDataURL('image/jpeg');
 
-async function predict() {
-    const img = captureFrame();
-    const response = await fetch('/predict', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image: img })
-    });
-    const data = await response.json();
-    letterDiv.textContent = data.letter;
-}
-
-// كل 500ms نرسل صورة للسيرفر
-setInterval(predict, 500);
-</script>
+            // إرسال الصورة إلى السيرفر
+            fetch('/predict', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ image: dataURL })
+            })
+            .then(response => response.json())
+            .then(data => {
+                predictionDiv.innerText = data.prediction;
+            })
+            .catch(err => {
+                predictionDiv.innerText = 'خطأ';
+                console.error(err);
+            });
+        });
+    </script>
 </body>
 </html>
