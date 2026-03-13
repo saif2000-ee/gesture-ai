@@ -1,6 +1,6 @@
 Flask==2.3.3
-numpy
+numpy==1.24.3
+scikit-learn==1.2.0
 opencv-python
 mediapipe
 gunicorn
-scikit-learn==1.2.0
