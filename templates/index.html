@@ -54,7 +54,7 @@
             // نسخ إطار الفيديو إلى الكانفاس
             const context = canvas.getContext('2d');
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
-            const dataURL = canvas.toDataURL('image/jpeg');
+            const data = canvas.toDataURL('image/png');
 
             // إرسال الصورة إلى السيرفر
             fetch('/predict', {
