@@ -1,76 +1,119 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>Gesture Recognition</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            background-color: #f0f0f0;
-        }
-        video, canvas {
-            border: 2px solid green;
-            border-radius: 8px;
-            margin-top: 20px;
-        }
-        #prediction {
-            font-size: 2em;
-            margin-top: 20px;
-            color: #007700;
-        }
-        button {
-            margin-top: 15px;
-            padding: 10px 20px;
-            font-size: 1em;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-    </style>
+<title>Gesture AI</title>
+
+<style>
+
+body{
+text-align:center;
+font-family:Arial;
+}
+
+video{
+border:3px solid black;
+}
+
+#letter{
+font-size:40px;
+margin-top:10px;
+}
+
+#word{
+font-size:50px;
+color:green;
+margin-top:20px;
+}
+
+button{
+font-size:20px;
+padding:10px 20px;
+margin-top:20px;
+}
+
+</style>
+
 </head>
+
 <body>
-    <h1>التعرف على الحروف بالإشارات</h1>
-    <video id="video" width="320" height="240" autoplay></video>
-    <canvas id="canvas" width="320" height="240" style="display:none;"></canvas>
-    <div id="prediction">–</div>
-    <button id="snapBtn">التقاط صورة</button>
 
-    <script>
-        const video = document.getElementById('video');
-        const canvas = document.getElementById('canvas');
-        const snapBtn = document.getElementById('snapBtn');
-        const predictionDiv = document.getElementById('prediction');
+<h2>Gesture AI</h2>
 
-        // تشغيل الكاميرا
-        navigator.mediaDevices.getUserMedia({ video: true })
-            .then(stream => {
-                video.srcObject = stream;
-            })
-            .catch(err => {
-                alert('لم يتمكن المتصفح من الوصول إلى الكاميرا: ' + err);
-            });
+<video id="video" width="400" autoplay></video>
+<canvas id="canvas" style="display:none"></canvas>
 
-        snapBtn.addEventListener('click', () => {
-            // نسخ إطار الفيديو إلى الكانفاس
-            const context = canvas.getContext('2d');
-            context.drawImage(video, 0, 0, canvas.width, canvas.height);
-            const data = canvas.toDataURL('image/png');
+<h1 id="letter">...</h1>
 
-            // إرسال الصورة إلى السيرفر
-            fetch('/predict', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ image: dataURL })
-            })
-            .then(response => response.json())
-            .then(data => {
-                predictionDiv.innerText = data.prediction;
-            })
-            .catch(err => {
-                predictionDiv.innerText = 'خطأ';
-                console.error(err);
-            });
-        });
-    </script>
+<h2>Word:</h2>
+<h1 id="word"></h1>
+
+<button onclick="clearWord()">Clear</button>
+
+<script>
+
+const video = document.getElementById("video")
+
+navigator.mediaDevices.getUserMedia({video:true})
+.then(stream=>{
+video.srcObject=stream
+})
+
+let currentLetter=""
+let word=""
+
+setInterval(()=>{
+predict()
+},800)
+
+
+function predict(){
+
+const canvas=document.getElementById("canvas")
+const ctx=canvas.getContext("2d")
+
+canvas.width=video.videoWidth
+canvas.height=video.videoHeight
+
+ctx.drawImage(video,0,0)
+
+let image=canvas.toDataURL("image/jpeg")
+
+fetch("/predict",{
+method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
+body:JSON.stringify({image:image})
+})
+.then(res=>res.json())
+.then(data=>{
+
+let letter=data.prediction
+
+document.getElementById("letter").innerText=letter
+
+// منع التكرار
+if(letter!=currentLetter && letter!="?"){
+
+word += letter
+
+document.getElementById("word").innerText=word
+
+currentLetter=letter
+}
+
+})
+
+}
+
+function clearWord(){
+
+word=""
+document.getElementById("word").innerText=""
+
+}
+
+</script>
+
 </body>
 </html>
